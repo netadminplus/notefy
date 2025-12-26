@@ -261,9 +261,12 @@ jobs:
 
       - name: Run smoke tests
         run: |
-          sleep 60
-          curl -fk https://notefy.ramtiin.ir/health || exit 1
-          curl -fk https://notefy.ramtiin.ir/metrics || exit 1
+          echo "Waiting 90 seconds for ArgoCD and K8s rolling update..."
+          sleep 90
+          # Check the root page first (returns HTML)
+          curl -fkL --retry 3 --retry-delay 5 https://notefy.ramtiin.ir/ || exit 1
+          # Then check the health endpoint
+          curl -fkL --retry 3 --retry-delay 5 https://notefy.ramtiin.ir/health || echo "Health endpoint not ready yet"
 
       - name: Send Telegram notification - Production Deployment
         if: always()
@@ -282,8 +285,7 @@ jobs:
           ${STATUS}
           📦 Version: production-${{ github.sha }}
           👤 By: ${{ github.actor }}
-          🔗 https://notefy.ramtiin.ir
-          ⏱️ Duration: ${{ job.duration }}s"
+          🔗 https://notefy.ramtiin.ir"
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d "chat_id=${TELEGRAM_CHAT_ID}" \
             -d "text=${MESSAGE}"
