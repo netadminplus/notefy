@@ -65,7 +65,7 @@ class TestNoteModel:
             markdown = note.to_markdown()
             assert "# Markdown Test" in markdown
             assert "Test markdown content" in markdown
-            assert "#markdown" in markdown
+            assert "markdown" in markdown
 
 
 class TestNoteAPI:

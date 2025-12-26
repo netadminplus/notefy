@@ -10,12 +10,11 @@ def app():
         yield _app
         db.drop_all()
 
-@pytest.fixture
-def client(app):
-    """Test client for the app"""
-    return app.test_client()
-
-@pytest.fixture
-def runner(app):
-    """Test CLI runner for the app"""
-    return app.test_cli_runner()
+@pytest.fixture(autouse=True)
+def clean_database(app):
+    """Ensure a clean database for every single test"""
+    with app.app_context():
+        # Clear all data from tables without dropping them
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
