@@ -4,8 +4,7 @@ kind: Kustomization
 namespace: staging
 
 resources:
-  - ../production/deployment.yaml
-  - ../production/postgres.yaml
+  - ../base
   - ingress.yaml
   - secrets.yaml
 
@@ -27,16 +26,3 @@ patches:
       - op: replace
         path: /spec/replicas
         value: 1
-      - op: replace
-        path: /spec/template/spec/containers/0/resources/requests/memory
-        value: "128Mi"
-      - op: replace
-        path: /spec/template/spec/containers/0/resources/requests/cpu
-        value: "100m"
-  - target:
-      kind: PersistentVolumeClaim
-      name: postgres-pvc
-    patch: |-
-      - op: replace
-        path: /spec/resources/requests/storage
-        value: 5Gi

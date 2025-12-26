@@ -4,8 +4,7 @@ kind: Kustomization
 namespace: production
 
 resources:
-  - deployment.yaml
-  - postgres.yaml
+  - ../base
   - ingress.yaml
   - secrets.yaml
   - backup-cronjob.yaml
@@ -18,8 +17,7 @@ labels:
 
 images:
   - name: ramtiin/notefy
-    # The CI/CD script looks for 'newTag: ' to replace it with the latest SHA
-    newTag: production-latest 
+    newTag: production-latest
 
 patches:
   - target:
@@ -29,10 +27,3 @@ patches:
       - op: replace
         path: /spec/replicas
         value: 3
-  - target:
-      kind: PersistentVolumeClaim
-      name: postgres-pvc
-    patch: |-
-      - op: replace
-        path: /spec/resources/requests/storage
-        value: 10Gi
