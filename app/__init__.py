@@ -3,14 +3,14 @@ Notefy - Flask Application Factory
 Production-grade note-taking application
 """
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from prometheus_flask_exporter import PrometheusMetrics
 import logging
 import sys
 import json
 from datetime import datetime
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from prometheus_flask_exporter import PrometheusMetrics
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -37,12 +37,13 @@ class JsonFormatter(logging.Formatter):
 
 def setup_logging():
     """Configure structured JSON logging to stdout"""
+    # Prevent duplicate handlers if create_app is called multiple times (like in tests)
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JsonFormatter())
-    root_logger.addHandler(handler)
+    if not root_logger.handlers:
+        root_logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(JsonFormatter())
+        root_logger.addHandler(handler)
 
 
 def create_app(config_name="production"):
@@ -68,18 +69,20 @@ def create_app(config_name="production"):
     metrics = PrometheusMetrics(app)
     metrics.info("notefy_app_info", "Notefy Application Info", version="1.0.0", environment=config_name)
 
-    # Register blueprints
-    from app.routes import main_bp
-
-    app.register_blueprint(main_bp)
-
-    # Create tables
+    # Register blueprints and models
     with app.app_context():
+        # IMPORT MODELS HERE so db.create_all() knows they exist
+        from app import models 
+        
+        from app.routes import main_bp
+        app.register_blueprint(main_bp)
+        
+        # Create tables
         db.create_all()
 
     app.logger.info(
         "Notefy application started",
-        extra={"environment": config_name, "database": app.config["SQLALCHEMY_DATABASE_URI"].split("@")[-1]},
+        extra={"environment": config_name},
     )
 
     return app
