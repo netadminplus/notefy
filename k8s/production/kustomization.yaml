@@ -4,36 +4,36 @@ kind: Kustomization
 namespace: production
 
 resources:
-  - namespace.yaml
   - deployment.yaml
   - postgres.yaml
   - ingress.yaml
   - secrets.yaml
   - backup-cronjob.yaml
 
-commonLabels:
-  app: notefy
-  environment: production
+# Modern way to handle labels
+labels:
+  - includeSelectors: true
+    pairs:
+      app: notefy
+      environment: production
 
 images:
   - name: ramtiin/notefy
     newTag: production-555b334c907c779191206b9233c30761e75bd95e
 
-# Production-specific patches
-patchesStrategicMerge:
-  - |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
+# Modern way to handle patches (fixes the "unique target" error)
+patches:
+  - target:
+      kind: Deployment
       name: notefy
-    spec:
-      replicas: 3
-  - |-
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: PersistentVolumeClaim
       name: postgres-pvc
-    spec:
-      resources:
-        requests:
-          storage: 10Gi
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 10Gi
