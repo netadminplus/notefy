@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Search and Actions Bar -->
 <div class="mb-8 flex flex-col md:flex-row gap-4">
     <div class="flex-1">
         <div class="relative">
@@ -12,7 +11,9 @@
             </svg>
         </div>
     </div>
-    <div class="flex gap-2">
+    <div class="flex items-center gap-4">
+        <span id="noteCount" class="text-sm text-gray-400 font-medium"></span>
+        
         <button onclick="showCreateModal()" class="px-6 py-3 bg-primary hover:bg-blue-600 rounded-lg font-medium transition flex items-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -27,12 +28,9 @@
     </div>
 </div>
 
-<!-- Notes Grid -->
 <div id="notesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <!-- Notes will be loaded here -->
-</div>
+    </div>
 
-<!-- Empty State -->
 <div id="emptyState" class="hidden text-center py-16">
     <svg class="w-24 h-24 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -44,7 +42,6 @@
     </button>
 </div>
 
-<!-- Create/Edit Modal -->
 <div id="noteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto fade-in">
         <div class="p-6 border-b border-gray-700 flex justify-between items-center">
@@ -97,14 +94,12 @@
         </form>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
 let allNotes = [];
 
-// Load notes on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadNotes();
     setupSearch();
@@ -122,14 +117,14 @@ async function loadNotes() {
         }
     } catch (error) {
         console.error('Error loading notes:', error);
-        showNotification('Failed to load notes', 'error');
     }
 }
 
 function renderNotes(notes) {
     const container = document.getElementById('notesContainer');
     const emptyState = document.getElementById('emptyState');
-    
+    if (!container || !emptyState) return;
+
     if (notes.length === 0) {
         container.innerHTML = '';
         emptyState.classList.remove('hidden');
@@ -149,162 +144,42 @@ function renderNotes(notes) {
     
     container.innerHTML = notes.map(note => `
         <div class="note-card ${colors[note.color] || colors.default} border rounded-xl p-6 fade-in">
-            ${note.is_pinned ? '<div class="flex justify-end mb-2"><svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h3a1 1 0 110 2h-3v5a1 1 0 11-2 0v-5H6a1 1 0 110-2h3V4a1 1 0 011-1z"/></svg></div>' : ''}
             <h3 class="text-xl font-bold mb-2 line-clamp-2">${escapeHtml(note.title)}</h3>
             <p class="text-gray-400 mb-4 line-clamp-3">${escapeHtml(note.content)}</p>
-            ${note.tags.length > 0 ? `
-                <div class="flex flex-wrap gap-2 mb-4">
-                    ${note.tags.map(tag => `<span class="px-2 py-1 bg-gray-700 rounded text-xs">#${escapeHtml(tag)}</span>`).join('')}
-                </div>
-            ` : ''}
-            <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
-                <span>${new Date(note.updated_at).toLocaleDateString()}</span>
-            </div>
             <div class="flex space-x-2">
-                <button onclick="editNote(${note.id})" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
-                    Edit
-                </button>
-                <button onclick="deleteNote(${note.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">
-                    Delete
-                </button>
+                <button onclick="editNote(${note.id})" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">Edit</button>
+                <button onclick="deleteNote(${note.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">Delete</button>
             </div>
         </div>
     `).join('');
 }
 
-function setupSearch() {
-    const searchInput = document.getElementById('searchInput');
-    let debounceTimer;
-    
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => searchNotes(e.target.value), 300);
-    });
+function updateNoteCount(count) {
+    const el = document.getElementById('noteCount');
+    if (el) {
+        el.textContent = `${count} note${count !== 1 ? 's' : ''}`;
+    }
 }
 
-async function searchNotes(query) {
-    if (!query.trim()) {
-        renderNotes(allNotes);
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            renderNotes(data.notes);
-        }
-    } catch (error) {
-        console.error('Error searching notes:', error);
+function setupSearch() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const filtered = allNotes.filter(n => 
+                n.title.toLowerCase().includes(e.target.value.toLowerCase()) || 
+                n.content.toLowerCase().includes(e.target.value.toLowerCase())
+            );
+            renderNotes(filtered);
+        });
     }
 }
 
 function showCreateModal() {
-    document.getElementById('modalTitle').textContent = 'Create New Note';
-    document.getElementById('noteForm').reset();
-    document.getElementById('noteId').value = '';
-    document.getElementById('noteModal').classList.remove('hidden');
-}
-
-async function editNote(id) {
-    const note = allNotes.find(n => n.id === id);
-    if (!note) return;
-    
-    document.getElementById('modalTitle').textContent = 'Edit Note';
-    document.getElementById('noteId').value = note.id;
-    document.getElementById('noteTitle').value = note.title;
-    document.getElementById('noteContent').value = note.content;
-    document.getElementById('noteTags').value = note.tags.join(', ');
-    document.getElementById('notePinned').checked = note.is_pinned;
-    document.getElementById('noteColor').value = note.color;
     document.getElementById('noteModal').classList.remove('hidden');
 }
 
 function closeModal() {
     document.getElementById('noteModal').classList.add('hidden');
-}
-
-document.getElementById('noteForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const noteId = document.getElementById('noteId').value;
-    const noteData = {
-        title: document.getElementById('noteTitle').value,
-        content: document.getElementById('noteContent').value,
-        tags: document.getElementById('noteTags').value.split(',').map(t => t.trim()).filter(t => t),
-        is_pinned: document.getElementById('notePinned').checked,
-        color: document.getElementById('noteColor').value
-    };
-    
-    try {
-        const url = noteId ? `/api/notes/${noteId}` : '/api/notes';
-        const method = noteId ? 'PUT' : 'POST';
-        
-        const response = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(noteData)
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification(noteId ? 'Note updated!' : 'Note created!', 'success');
-            closeModal();
-            loadNotes();
-        } else {
-            showNotification('Failed to save note', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving note:', error);
-        showNotification('Failed to save note', 'error');
-    }
-});
-
-async function deleteNote(id) {
-    if (!confirm('Are you sure you want to delete this note?')) return;
-    
-    try {
-        const response = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification('Note deleted!', 'success');
-            loadNotes();
-        } else {
-            showNotification('Failed to delete note', 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting note:', error);
-        showNotification('Failed to delete note', 'error');
-    }
-}
-
-async function exportNotes(format) {
-    window.location.href = `/api/export/${format}`;
-    showNotification('Exporting notes...', 'success');
-}
-
-function updateNoteCount(count) {
-    document.getElementById('noteCount').textContent = `${count} note${count !== 1 ? 's' : ''}`;
-}
-
-function showNotification(message, type) {
-    const colors = {
-        success: 'bg-green-600',
-        error: 'bg-red-600',
-        info: 'bg-blue-600'
-    };
-    
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
 }
 
 function escapeHtml(text) {
