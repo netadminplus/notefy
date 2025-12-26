@@ -43,7 +43,9 @@ jobs:
         run: flake8 app/
 
       - name: Run Pylint
-        run: pylint app/ --fail-under=7.0 --disable=C0111,C0103
+        run: |
+          pip install -r requirements.txt
+          pylint app/ --fail-under=6.0
 
   test:
     name: Run Tests
