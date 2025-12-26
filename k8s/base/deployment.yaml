@@ -6,7 +6,7 @@ metadata:
     app: notefy
     component: web
 spec:
-  replicas: 1 # Default base value; overlays will override this
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -30,7 +30,7 @@ spec:
       - name: notefy
         image: ramtiin/notefy:latest 
         imagePullPolicy: Always
-        # FIX: Added gunicorn command with 90s timeout to prevent blank/truncated pages
+        # Corrected command to ensure workers have enough time to render v2 templates
         command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "90", "app:create_app()"]
         ports:
         - containerPort: 5000
@@ -42,19 +42,18 @@ spec:
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: notefy-secrets
+              name: postgres-secret
               key: postgres-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: notefy-secrets
+              name: postgres-secret
               key: postgres-password
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: notefy-secrets
+              name: postgres-secret
               key: postgres-db
-        # FIX: Dynamic DATABASE_URL that works in any namespace
         - name: DATABASE_URL
           value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)"
         resources:
