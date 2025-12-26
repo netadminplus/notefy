@@ -206,8 +206,8 @@ jobs:
       - name: Run smoke tests
         run: |
           sleep 60
-          curl -f https://staging-notefy.ramtiin.ir/health || exit 1
-          curl -f https://staging-notefy.ramtiin.ir/metrics || exit 1
+          curl -fk https://staging-notefy.ramtiin.ir/health || exit 1
+          curl -fk https://staging-notefy.ramtiin.ir/metrics || exit 1
 
       - name: Send Telegram notification - Staging Deployment
         if: always()
@@ -262,8 +262,8 @@ jobs:
       - name: Run smoke tests
         run: |
           sleep 60
-          curl -f https://notefy.ramtiin.ir/health || exit 1
-          curl -f https://notefy.ramtiin.ir/metrics || exit 1
+          curl -fk https://notefy.ramtiin.ir/health || exit 1
+          curl -fk https://notefy.ramtiin.ir/metrics || exit 1
 
       - name: Send Telegram notification - Production Deployment
         if: always()
