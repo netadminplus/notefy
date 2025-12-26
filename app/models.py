@@ -1,9 +1,11 @@
 from datetime import datetime
 from app import db
 
+
 class Note(db.Model):
     """Note model for storing note data"""
-    __tablename__ = 'notes'
+
+    __tablename__ = "notes"
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -24,7 +26,7 @@ class Note(db.Model):
             "color": self.color,
             "is_pinned": self.is_pinned,
             "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "updated_at": self.updated_at.isoformat(),
         }
 
     def to_markdown(self):

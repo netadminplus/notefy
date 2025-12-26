@@ -1,7 +1,8 @@
 import pytest
 
-# Note: fixtures 'app' and 'client' are automatically 
+# Note: fixtures 'app' and 'client' are automatically
 # loaded from tests/conftest.py
+
 
 def test_export_workflow(client):
     """Test export functionality without the class-based 'self' argument"""
@@ -12,7 +13,7 @@ def test_export_workflow(client):
     json_res = client.get("/api/export/json")
     assert json_res.status_code == 200
     assert json_res.content_type == "application/json"
-    
+
     # Test Markdown Export
     md_res = client.get("/api/export/markdown")
     assert md_res.status_code == 200

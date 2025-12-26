@@ -73,10 +73,11 @@ def create_app(config_name="production"):
     with app.app_context():
         # noqa: F401 tells Flake8 to ignore the "unused import" error
         from app import models  # noqa: F401
-        
+
         from app.routes import main_bp
+
         app.register_blueprint(main_bp)
-        
+
         # Create tables
         db.create_all()
 
