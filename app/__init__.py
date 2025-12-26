@@ -71,8 +71,8 @@ def create_app(config_name="production"):
 
     # Register blueprints and models
     with app.app_context():
-        # IMPORT MODELS HERE so db.create_all() knows they exist
-        from app import models 
+        # noqa: F401 tells Flake8 to ignore the "unused import" error
+        from app import models  # noqa: F401
         
         from app.routes import main_bp
         app.register_blueprint(main_bp)
