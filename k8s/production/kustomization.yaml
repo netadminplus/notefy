@@ -19,7 +19,7 @@ labels:
 
 images:
   - name: ramtiin/notefy
-    newTag: production-9b242745a7de4567b219e11d6aee2263e8b74541
+    newTag: production-5f5bdb34efca91f7735f5b3f99d8d81522b6e116
 
 # Modern way to handle patches (fixes the "unique target" error)
 patches:
