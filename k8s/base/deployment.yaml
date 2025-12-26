@@ -2,13 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: notefy
-  namespace: production
   labels:
     app: notefy
-    environment: production
     component: web
 spec:
-  replicas: 3
+  replicas: 1 # Default base value; overlays will override this
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -17,13 +15,11 @@ spec:
   selector:
     matchLabels:
       app: notefy
-      environment: production
       component: web
   template:
     metadata:
       labels:
         app: notefy
-        environment: production
         component: web
       annotations:
         prometheus.io/scrape: "true"
@@ -32,9 +28,10 @@ spec:
     spec:
       containers:
       - name: notefy
-        # Note: We leave this generic; GitHub Actions/ArgoCD will inject the specific SHA tag
-        image: ramtiin/notefy:production-latest 
+        image: ramtiin/notefy:latest 
         imagePullPolicy: Always
+        # FIX: Added gunicorn command with 90s timeout to prevent blank/truncated pages
+        command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "90", "app:create_app()"]
         ports:
         - containerPort: 5000
           name: http
@@ -45,21 +42,21 @@ spec:
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_USER
+              name: notefy-secrets
+              key: postgres-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_PASSWORD
+              name: notefy-secrets
+              key: postgres-password
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_DB
-        # Professional tip: DATABASE_URL is defined AFTER the components it depends on
+              name: notefy-secrets
+              key: postgres-db
+        # FIX: Dynamic DATABASE_URL that works in any namespace
         - name: DATABASE_URL
-          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service.production.svc.cluster.local:5432/$(POSTGRES_DB)"
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)"
         resources:
           requests:
             memory: "256Mi"
@@ -84,7 +81,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: notefy-service
-  namespace: production
   labels:
     app: notefy
     component: web
@@ -97,5 +93,4 @@ spec:
     name: http
   selector:
     app: notefy
-    environment: production
     component: web
