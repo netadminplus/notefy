@@ -207,7 +207,7 @@ def export_markdown():
         notes = Note.query.order_by(Note.created_at.desc()).all()
 
         markdown_content = f"""# Notefy Export
-        
+
 Exported: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC
 Total Notes: {len(notes)}
 
