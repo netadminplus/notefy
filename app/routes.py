@@ -45,9 +45,7 @@ def get_notes():
     """Get all notes"""
     try:
         notes = Note.query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).all()
-        return jsonify(
-            {"success": True, "notes": [note.to_dict() for note in notes], "count": len(notes)}
-        )
+        return jsonify({"success": True, "notes": [note.to_dict() for note in notes], "count": len(notes)})
     except Exception as e:
         logger.error(f"Error fetching notes: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
@@ -72,11 +70,7 @@ def create_note():
         note = Note(
             title=data["title"],
             content=data["content"],
-            tags=(
-                ",".join(data.get("tags", []))
-                if isinstance(data.get("tags"), list)
-                else data.get("tags", "")
-            ),
+            tags=(",".join(data.get("tags", [])) if isinstance(data.get("tags"), list) else data.get("tags", "")),
             color=data.get("color", "default"),
             is_pinned=data.get("is_pinned", False),
         )
@@ -106,9 +100,7 @@ def update_note(note_id):
         if "content" in data:
             note.content = data["content"]
         if "tags" in data:
-            note.tags = (
-                ",".join(data["tags"]) if isinstance(data["tags"], list) else data["tags"]
-            )
+            note.tags = ",".join(data["tags"]) if isinstance(data["tags"], list) else data["tags"]
         if "color" in data:
             note.color = data["color"]
         if "is_pinned" in data:
@@ -257,9 +249,7 @@ def get_stats():
         from collections import Counter
 
         tag_counts = Counter(all_tags)
-        popular_tags = [
-            {"tag": tag, "count": count} for tag, count in tag_counts.most_common(10)
-        ]
+        popular_tags = [{"tag": tag, "count": count} for tag, count in tag_counts.most_common(10)]
 
         return jsonify(
             {
