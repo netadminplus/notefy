@@ -38,7 +38,7 @@ jobs:
         run: black --check .
 
       - name: Run Flake8
-        run: flake8 app/ --max-line-length=120 --exclude=__pycache__
+        run: flake8 app/
 
       - name: Run Pylint
         run: pylint app/ --fail-under=7.0 --disable=C0111,C0103
