@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: production
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - postgres.yaml
+  - ingress.yaml
+  - secrets.yaml
+  - backup-cronjob.yaml
+
+commonLabels:
+  app: notefy
+  environment: production
+
+images:
+  - name: ramtiin/notefy
+    newTag: production-latest
+
+# Production-specific patches
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: notefy
+    spec:
+      replicas: 3
+  - |-
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: postgres-pvc
+    spec:
+      resources:
+        requests:
+          storage: 10Gi

@@ -1,142 +1,22 @@
-# .gitignore
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual environments
-venv/
-env/
-ENV/
-.venv
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Testing
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-*.cover
-.hypothesis/
-.tox/
-
-# Flask
-instance/
-.webassets-cache
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Logs
-*.log
-logs/
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Backups
-backups/
-*.sql
-*.sql.gz
-
-# Kubernetes secrets (do not commit real secrets!)
-k8s/*/secrets.yaml.real
-
-# MacOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
----
-
-# .dockerignore
-
 .git
 .gitignore
 README.md
 .github/
 .vscode/
 .idea/
-
-# Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-
-# Virtual environments
 venv/
 env/
 .venv
-
-# Testing
 tests/
 .pytest_cache/
 .coverage
 htmlcov/
-.tox/
-
-# Documentation
 docs/
 *.md
-
-# Kubernetes
 k8s/
 argocd/
-
-# CI/CD
-.github/
-
-# Development
 docker-compose.yaml
-.env.local
-
-# Backups
 backups/
-*.sql
-*.sql.gz
-
-# Logs
 *.log
-logs/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-.DS_Store
