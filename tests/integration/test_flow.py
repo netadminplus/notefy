@@ -1,12 +1,21 @@
-def test_export_workflow(self, client):
-        """Test export functionality"""
-        # Create one simple note
-        client.post("/api/notes", json={"title": "Export", "content": "test"})
+import pytest
 
-        # Export JSON - use follow_redirects just in case
-        json_res = client.get("/api/export/json", follow_redirects=True)
-        assert json_res.status_code == 200
-        
-        # Export Markdown
-        md_res = client.get("/api/export/markdown", follow_redirects=True)
-        assert md_res.status_code == 200
+# Note: fixtures 'app' and 'client' are automatically 
+# loaded from tests/conftest.py
+
+def test_export_workflow(client):
+    """Test export functionality without the class-based 'self' argument"""
+    # Create one simple note to ensure there is data to export
+    client.post("/api/notes", json={"title": "Export Test", "content": "test data"})
+
+    # Test JSON Export
+    json_res = client.get("/api/export/json")
+    assert json_res.status_code == 200
+    assert json_res.content_type == "application/json"
+    
+    # Test Markdown Export
+    md_res = client.get("/api/export/markdown")
+    assert md_res.status_code == 200
+    assert "text/markdown" in md_res.content_type
+    # Verify content
+    assert b"Export Test" in md_res.data
