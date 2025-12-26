@@ -1,20 +1,19 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: notefy-ingress
-  namespace: production
+  name: notefy-ingress-staging
+  namespace: staging
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    kubernetes.io/ingress.class: "nginx"
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - notefy.ramtiin.ir
-    secretName: notefy-prod-tls
+    - staging.ramtiin.ir # Use a subdomain for staging
+    secretName: notefy-staging-tls
   rules:
-  - host: notefy.ramtiin.ir
+  - host: staging.ramtiin.ir
     http:
       paths:
       - path: /

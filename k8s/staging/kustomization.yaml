@@ -4,34 +4,39 @@ kind: Kustomization
 namespace: staging
 
 resources:
-  - namespace.yaml
-  - deployment.yaml
-  - postgres.yaml
+  - ../production/deployment.yaml
+  - ../production/postgres.yaml
   - ingress.yaml
+  - secrets.yaml
 
-commonLabels:
-  app: notefy
-  environment: staging
+labels:
+  - includeSelectors: true
+    pairs:
+      app: notefy
+      environment: staging
 
 images:
   - name: ramtiin/notefy
     newTag: staging-latest
 
-# Staging-specific patches
-patchesStrategicMerge:
-  - |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
+patches:
+  - target:
+      kind: Deployment
       name: notefy
-    spec:
-      replicas: 2
-  - |-
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "128Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+  - target:
+      kind: PersistentVolumeClaim
       name: postgres-pvc
-    spec:
-      resources:
-        requests:
-          storage: 5Gi
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 5Gi
