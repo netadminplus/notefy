@@ -34,7 +34,10 @@ def health():
         db_status = "disconnected"
         status_code = 503
 
-    return jsonify({"status": "UP" if status_code == 200 else "DOWN", "database": db_status}), status_code
+    return (
+        jsonify({"status": "UP" if status_code == 200 else "DOWN", "database": db_status}),
+        status_code,
+    )
 
 
 @main_bp.route("/api/notes", methods=["GET"])
@@ -42,7 +45,9 @@ def get_notes():
     """Get all notes"""
     try:
         notes = Note.query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).all()
-        return jsonify({"success": True, "notes": [note.to_dict() for note in notes], "count": len(notes)})
+        return jsonify(
+            {"success": True, "notes": [note.to_dict() for note in notes], "count": len(notes)}
+        )
     except Exception as e:
         logger.error(f"Error fetching notes: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
@@ -67,7 +72,11 @@ def create_note():
         note = Note(
             title=data["title"],
             content=data["content"],
-            tags=",".join(data.get("tags", [])) if isinstance(data.get("tags"), list) else data.get("tags", ""),
+            tags=(
+                ",".join(data.get("tags", []))
+                if isinstance(data.get("tags"), list)
+                else data.get("tags", "")
+            ),
             color=data.get("color", "default"),
             is_pinned=data.get("is_pinned", False),
         )
@@ -97,7 +106,9 @@ def update_note(note_id):
         if "content" in data:
             note.content = data["content"]
         if "tags" in data:
-            note.tags = ",".join(data["tags"]) if isinstance(data["tags"], list) else data["tags"]
+            note.tags = (
+                ",".join(data["tags"]) if isinstance(data["tags"], list) else data["tags"]
+            )
         if "color" in data:
             note.color = data["color"]
         if "is_pinned" in data:
@@ -185,7 +196,12 @@ def export_json():
         output.write(json.dumps(export_data, indent=2).encode("utf-8"))
         output.seek(0)
 
-        return send_file(output, mimetype="application/json", as_attachment=True, download_name="notefy_export.json")
+        return send_file(
+            output,
+            mimetype="application/json",
+            as_attachment=True,
+            download_name="notefy_export.json",
+        )
 
     except Exception as e:
         logger.error(f"Error exporting notes: {str(e)}")
@@ -214,7 +230,12 @@ Total Notes: {len(notes)}
         output.write(markdown_content.encode("utf-8"))
         output.seek(0)
 
-        return send_file(output, mimetype="text/markdown", as_attachment=True, download_name="notefy_export.md")
+        return send_file(
+            output,
+            mimetype="text/markdown",
+            as_attachment=True,
+            download_name="notefy_export.md",
+        )
 
     except Exception as e:
         logger.error(f"Error exporting markdown: {str(e)}")
@@ -236,12 +257,18 @@ def get_stats():
         from collections import Counter
 
         tag_counts = Counter(all_tags)
-        popular_tags = [{"tag": tag, "count": count} for tag, count in tag_counts.most_common(10)]
+        popular_tags = [
+            {"tag": tag, "count": count} for tag, count in tag_counts.most_common(10)
+        ]
 
         return jsonify(
             {
                 "success": True,
-                "stats": {"total_notes": total_notes, "pinned_notes": pinned_notes, "popular_tags": popular_tags},
+                "stats": {
+                    "total_notes": total_notes,
+                    "pinned_notes": pinned_notes,
+                    "popular_tags": popular_tags,
+                },
             }
         )
 
