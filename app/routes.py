@@ -2,6 +2,7 @@
 Routes and API endpoints for Notefy application
 """
 
+from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, send_file
 from app import db
 from app.models import Note
@@ -141,7 +142,9 @@ def search_notes():
         if not query:
             return jsonify({"success": True, "notes": [], "count": 0})
 
-        sql = f"SELECT * FROM notes WHERE content LIKE '%{query}%' OR title LIKE '%{query}%' OR tags LIKE '%{query}%' ORDER BY updated_at DESC"
+        # Fixed E501 by splitting the string
+        sql = (f"SELECT * FROM notes WHERE content LIKE '%{query}%' OR title LIKE '%{query}%' "
+               f"OR tags LIKE '%{query}%' ORDER BY updated_at DESC")
         result = db.session.execute(text(sql))
 
         notes = []
@@ -244,6 +247,3 @@ def get_stats():
     except Exception as e:
         logger.error(f"Error fetching stats: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-from datetime import datetime
