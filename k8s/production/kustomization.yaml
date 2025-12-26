@@ -17,7 +17,7 @@ commonLabels:
 
 images:
   - name: ramtiin/notefy
-    newTag: production-latest
+    newTag: production-130c6d1d950f749e936abb0227ef68c1c7190fc7
 
 # Production-specific patches
 patchesStrategicMerge:
