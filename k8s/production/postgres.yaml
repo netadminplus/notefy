@@ -3,15 +3,23 @@ kind: Deployment
 metadata:
   name: postgres
   namespace: production
+  labels:
+    app: notefy
+    environment: production
+    component: database
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: notefy
+      environment: production
+      component: database
   template:
     metadata:
       labels:
-        app: postgres
+        app: notefy
+        environment: production
+        component: database
     spec:
       containers:
       - name: postgres
@@ -40,9 +48,14 @@ kind: Service
 metadata:
   name: postgres-service
   namespace: production
+  labels:
+    app: notefy
+    component: database
 spec:
   selector:
-    app: postgres
+    app: notefy
+    environment: production
+    component: database
   ports:
   - port: 5432
     targetPort: 5432
