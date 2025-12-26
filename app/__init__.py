@@ -66,8 +66,19 @@ def create_app(config_name="production"):
     migrate.init_app(app, db)
 
     # Initialize Prometheus metrics
+    # We use a try-except block here to prevent "Duplicated timeseries" errors
+    # which occur when running multiple test cases in a single session.
     metrics = PrometheusMetrics(app)
-    metrics.info("notefy_app_info", "Notefy Application Info", version="1.0.0", environment=config_name)
+    try:
+        metrics.info(
+            "notefy_app_info", 
+            "Notefy Application Info", 
+            version="1.0.0", 
+            environment=config_name
+        )
+    except ValueError:
+        # Metric already registered in this process (common during tests)
+        pass
 
     # Register blueprints and models
     with app.app_context():
