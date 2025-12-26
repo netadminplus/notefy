@@ -71,10 +71,16 @@ class TestFullUserFlow:
         assert len(list_response.get_json()["notes"]) == 4
 
     def test_export_workflow(self, client):
-        """Test export functionality"""
-        # Create notes
         for i in range(3):
-            client.post("/api/notes", json={"title": f"Export Note {i}", "content": f"Export content {i}"})
+            client.post("/api/notes", json={"title": f"Note {i}", "content": "test"})
+
+        json_response = client.get("/api/export/json")
+        assert json_response.status_code == 200
+        assert len(json_response.data) > 0  # Force read data
+
+        md_response = client.get("/api/export/markdown")
+        assert md_response.status_code == 200
+        assert len(md_response.data) > 0  # Force read data
 
         # Export JSON
         json_response = client.get("/api/export/json")

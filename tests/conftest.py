@@ -1,9 +1,9 @@
 import pytest
 from app import create_app, db
+from sqlalchemy import text
 
 @pytest.fixture(scope="session")
 def app():
-    """Create application for the test session"""
     _app = create_app("testing")
     with _app.app_context():
         db.create_all()
@@ -12,9 +12,10 @@ def app():
 
 @pytest.fixture(autouse=True)
 def clean_database(app):
-    """Ensure a clean database for every single test"""
     with app.app_context():
-        # Clear all data from tables without dropping them
+        # Clear all data
         for table in reversed(db.metadata.sorted_tables):
             db.session.execute(table.delete())
         db.session.commit()
+        # CRITICAL: Close the session to release DB locks
+        db.session.remove()
