@@ -70,12 +70,7 @@ def create_app(config_name="production"):
     # which occur when running multiple test cases in a single session.
     metrics = PrometheusMetrics(app)
     try:
-        metrics.info(
-            "notefy_app_info", 
-            "Notefy Application Info", 
-            version="1.0.0", 
-            environment=config_name
-        )
+        metrics.info("notefy_app_info", "Notefy Application Info", version="1.0.0", environment=config_name)
     except ValueError:
         # Metric already registered in this process (common during tests)
         pass
