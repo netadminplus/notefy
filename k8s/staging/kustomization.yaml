@@ -16,7 +16,7 @@ labels:
 
 images:
   - name: ramtiin/notefy
-    newTag: staging-0db129100a3098becec2e553250449b3accbe09e
+    newTag: staging-94f5b8c0a72075260d49d0021e2db7c88a491ff2
 
 patches:
   - target:
