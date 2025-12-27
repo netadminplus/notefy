@@ -29,7 +29,7 @@
 </div>
 
 <div id="notesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    </div>
+</div>
 
 <div id="emptyState" class="hidden text-center py-16">
     <svg class="w-24 h-24 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,13 +103,13 @@ let allNotes = [];
 document.addEventListener('DOMContentLoaded', () => {
     loadNotes();
     setupSearch();
+    setupForm(); // Initialize form handler
 });
 
 async function loadNotes() {
     try {
         const response = await fetch('/api/notes');
         const data = await response.json();
-        
         if (data.success) {
             allNotes = data.notes;
             renderNotes(allNotes);
@@ -143,31 +143,105 @@ function renderNotes(notes) {
     };
     
     container.innerHTML = notes.map(note => `
-        <div class="note-card ${colors[note.color] || colors.default} border rounded-xl p-6 fade-in">
-            <h3 class="text-xl font-bold mb-2 line-clamp-2">${escapeHtml(note.title)}</h3>
-            <p class="text-gray-400 mb-4 line-clamp-3">${escapeHtml(note.content)}</p>
-            <div class="flex space-x-2">
-                <button onclick="editNote(${note.id})" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">Edit</button>
-                <button onclick="deleteNote(${note.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">Delete</button>
+        <div class="note-card ${colors[note.color] || colors.default} border rounded-xl p-6 fade-in flex flex-col h-full">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="text-xl font-bold line-clamp-2">${escapeHtml(note.title)}</h3>
+                ${note.is_pinned ? '📌' : ''}
+            </div>
+            <p class="text-gray-400 mb-4 line-clamp-3 flex-grow">${escapeHtml(note.content)}</p>
+            <div class="mt-auto">
+                <div class="flex flex-wrap gap-2 mb-4">
+                    ${note.tags ? note.tags.map(tag => `<span class="px-2 py-0.5 bg-gray-700 rounded text-xs">#${escapeHtml(tag)}</span>`).join('') : ''}
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="editNote(${note.id})" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm">Edit</button>
+                    <button onclick="deleteNote(${note.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition text-sm">Delete</button>
+                </div>
             </div>
         </div>
     `).join('');
 }
 
+function setupForm() {
+    const form = document.getElementById('noteForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault(); // CRITICAL: Prevents page refresh
+        
+        const noteId = document.getElementById('noteId').value;
+        const noteData = {
+            title: document.getElementById('noteTitle').value,
+            content: document.getElementById('noteContent').value,
+            tags: document.getElementById('noteTags').value.split(',').map(t => t.trim()).filter(t => t),
+            is_pinned: document.getElementById('notePinned').checked,
+            color: document.getElementById('noteColor').value
+        };
+
+        try {
+            const url = noteId ? `/api/notes/${noteId}` : '/api/notes';
+            const method = noteId ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(noteData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                closeModal();
+                loadNotes();
+            } else {
+                alert('Failed to save note');
+            }
+        } catch (error) {
+            console.error('Error saving note:', error);
+            alert('Error saving note');
+        }
+    });
+}
+
+function editNote(id) {
+    const note = allNotes.find(n => n.id === id);
+    if (!note) return;
+    
+    document.getElementById('modalTitle').textContent = 'Edit Note';
+    document.getElementById('noteId').value = note.id;
+    document.getElementById('noteTitle').value = note.title;
+    document.getElementById('noteContent').value = note.content;
+    document.getElementById('noteTags').value = note.tags.join(', ');
+    document.getElementById('notePinned').checked = note.is_pinned;
+    document.getElementById('noteColor').value = note.color;
+    document.getElementById('noteModal').classList.remove('hidden');
+}
+
+async function deleteNote(id) {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    try {
+        const response = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (result.success) loadNotes();
+    } catch (error) {
+        console.error('Error deleting note:', error);
+    }
+}
+
+function exportNotes(format) {
+    window.location.href = `/api/export/${format}`;
+}
+
 function updateNoteCount(count) {
     const el = document.getElementById('noteCount');
-    if (el) {
-        el.textContent = `${count} note${count !== 1 ? 's' : ''}`;
-    }
+    if (el) el.textContent = `${count} note${count !== 1 ? 's' : ''}`;
 }
 
 function setupSearch() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
             const filtered = allNotes.filter(n => 
-                n.title.toLowerCase().includes(e.target.value.toLowerCase()) || 
-                n.content.toLowerCase().includes(e.target.value.toLowerCase())
+                n.title.toLowerCase().includes(query) || 
+                n.content.toLowerCase().includes(query)
             );
             renderNotes(filtered);
         });
@@ -175,6 +249,9 @@ function setupSearch() {
 }
 
 function showCreateModal() {
+    document.getElementById('modalTitle').textContent = 'Create New Note';
+    document.getElementById('noteForm').reset();
+    document.getElementById('noteId').value = '';
     document.getElementById('noteModal').classList.remove('hidden');
 }
 
