@@ -29,7 +29,6 @@ jobs:
         run: |
           black --check .
           flake8 app/
-      # --- NEW: Bandit Security Scan (from Nana's video) ---
       - name: Run Bandit SAST Scan
         run: |
           bandit -r app/ -f json -o bandit-report.json || true
@@ -44,7 +43,19 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     needs: lint
-    # ... (Keep your existing Postgres service configuration here)
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: notefy_test
+          POSTGRES_USER: notefy
+          POSTGRES_PASSWORD: test_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -80,21 +91,15 @@ jobs:
           else
             echo "ENV=staging" >> $GITHUB_OUTPUT
           fi
-      
-      # Build the image locally first for scanning
       - name: Build Docker Image locally
         run: |
           docker build -t ${{ env.DOCKER_IMAGE }}:scan-tmp .
-
-      # --- NEW: Docker Scout Scan (from Nana's video) ---
       - name: Docker Scout Scan
         uses: docker/scout-action@v1
         with:
           command: quickview,cves
           image: ${{ env.DOCKER_IMAGE }}:scan-tmp
           only-severities: critical,high
-          # sarif-file: scout-report.sarif # Optional: for GitHub Security Tab
-
       - name: Push Docker Image
         run: |
           docker tag ${{ env.DOCKER_IMAGE }}:scan-tmp ${{ env.DOCKER_IMAGE }}:${{ steps.env.outputs.ENV }}-${{ github.sha }}
@@ -103,7 +108,41 @@ jobs:
           docker push ${{ env.DOCKER_IMAGE }}:${{ steps.env.outputs.ENV }}-latest
 
   deploy-staging:
-    # ... (Keep your existing deploy-staging logic)
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update staging kustomization
+        run: |
+          cd k8s/staging
+          sed -i "s|newTag:.*|newTag: staging-${{ github.sha }}|" kustomization.yaml
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add kustomization.yaml
+          git commit -m "🚀 Deploy Staging: staging-${{ github.sha }}"
+          git push
 
   deploy-production:
-    # ... (Keep your existing deploy-production logic)
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update production kustomization
+        run: |
+          cd k8s/production
+          sed -i "s|newTag:.*|newTag: production-${{ github.sha }}|" kustomization.yaml
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add kustomization.yaml
+          git commit -m "⭐ Deploy Production: production-${{ github.sha }}"
+          git push
