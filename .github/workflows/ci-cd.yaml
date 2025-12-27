@@ -29,9 +29,10 @@ jobs:
         run: |
           black --check .
           flake8 app/
+      # --- FIX: Removed '|| true' so Bandit fails the job if vulnerabilities are found ---
       - name: Run Bandit SAST Scan
         run: |
-          bandit -r app/ -f json -o bandit-report.json || true
+          bandit -r app/ -f json -o bandit-report.json
       - name: Upload Bandit Artifact
         uses: actions/upload-artifact@v4
         if: always()
@@ -94,12 +95,16 @@ jobs:
       - name: Build Docker Image locally
         run: |
           docker build -t ${{ env.DOCKER_IMAGE }}:scan-tmp .
+      
+      # --- FIX: Added exit-code: true to fail the build on High/Critical CVEs ---
       - name: Docker Scout Scan
         uses: docker/scout-action@v1
         with:
           command: quickview,cves
           image: ${{ env.DOCKER_IMAGE }}:scan-tmp
           only-severities: critical,high
+          exit-code: true
+
       - name: Push Docker Image
         run: |
           docker tag ${{ env.DOCKER_IMAGE }}:scan-tmp ${{ env.DOCKER_IMAGE }}:${{ steps.env.outputs.ENV }}-${{ github.sha }}
